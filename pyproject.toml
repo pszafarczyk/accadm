@@ -1,5 +1,5 @@
 [project]
-name = "accadm"
+name = "password-admin"
 version = "0.1.0"
 description = "Account Administrator"
 authors = [
@@ -10,7 +10,7 @@ readme = "README.rst"
 requires-python = ">=3.12,<4.0"
 
 [tool.poetry]
-packages = [{ include = "accadm", from = "src" }]
+packages = [{ include = "password_admin", from = "src" }]
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.4.0"
