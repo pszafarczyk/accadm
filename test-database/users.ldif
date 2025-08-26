@@ -1,0 +1,32 @@
+dn: ou=people,dc=test,dc=org
+changetype: add
+objectClass: organizationalUnit
+ou: people
+
+dn: uid=john,ou=people,dc=test,dc=org
+changetype: add
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: top
+cn: john
+sn: Doe
+uid: john
+uidNumber: 1001
+gidNumber: 1001
+homeDirectory: /home/john
+mail: john@test.org
+userPassword: johnpass
+
+dn: uid=jane,ou=people,dc=test,dc=org
+changetype: add
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: top
+cn: jane
+sn: Smith
+uid: jane
+uidNumber: 1002
+gidNumber: 1002
+homeDirectory: /home/jane
+mail: jane@test.org
+userPassword: janepass
