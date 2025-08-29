@@ -19,7 +19,9 @@ mypy = "^1.16.0"
 complexipy = "^3.0.0"
 
 [tool.poetry.dependencies]
-pydantic = "^2.11.7"
+fastapi = {extras = ["standard"], version = "^0.116.1"}
+pydantic-settings = "^2.10.1"
+cachetools = "^6.2.0"
 
 [tool.mypy]
 files = ["src", "tests"]
