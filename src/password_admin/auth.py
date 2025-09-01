@@ -12,14 +12,18 @@ class LoginCredentials(BaseModel):
     """Credentials used for logging in."""
 
     username: Annotated[str, StringConstraints(min_length=1, max_length=settings.max_username_length, pattern=f'^[{settings.username_allowed_characters}]+$')]
-    password: Annotated[str, StringConstraints(min_length=settings.min_password_length, max_length=settings.max_password_length)]
+    password: Annotated[str, StringConstraints(max_length=settings.max_password_length)]
 
 
 class NewCredentials(LoginCredentials):
     """Credentials used when setting a new password."""
 
+    username: Annotated[str, StringConstraints(min_length=1, max_length=settings.max_username_length, pattern=f'^[{settings.username_allowed_characters}]+$')]
+    password: Annotated[str, StringConstraints(min_length=settings.min_password_length, max_length=settings.max_password_length)]
+
     @field_validator('password')
-    def validate_password(self, value: str) -> str:
+    @classmethod
+    def validate_password(cls, value: str) -> str:
         msg = None
         if not re.search(r'[A-Za-z]', value):
             msg = 'Password must contain at least one letter'
