@@ -15,7 +15,7 @@ class LoginCredentials(BaseModel):
     password: Annotated[str, StringConstraints(max_length=settings.max_password_length)]
 
 
-class NewCredentials(LoginCredentials):
+class NewCredentials(BaseModel):
     """Credentials used when setting a new password."""
 
     username: Annotated[str, StringConstraints(min_length=1, max_length=settings.max_username_length, pattern=f'^[{settings.username_allowed_characters}]+$')]
