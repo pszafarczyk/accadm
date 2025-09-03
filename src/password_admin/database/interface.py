@@ -4,13 +4,13 @@ from password_admin.auth import LoginCredentials
 from password_admin.auth import NewCredentials
 
 
-class DatabaseInterface(Protocol):
+class DbConnectionInterface(Protocol):
     """Interface for database connection."""
 
     def login(self, credentials: LoginCredentials) -> None:
         """Establishes connection to database.
 
-        Should raise DatabaseConnectionError/DatabaseLoginError on failure.
+        Should raise DbConnectionError/DbLoginError on failure.
         """
 
     def logout(self) -> None: ...

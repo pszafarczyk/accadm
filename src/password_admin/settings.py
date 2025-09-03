@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     username_allowed_characters: Annotated[str, StringConstraints(min_length=1)] = 'a-zA-Z0-9_.-@'
     min_password_length: PositiveInt = 16
     max_password_length: PositiveInt = 256
-    token_length: PositiveInt = 64
+    session_id_length: PositiveInt = 64
     session_duration_seconds: PositiveInt = 900
     max_sessions: PositiveInt = 1024
 
