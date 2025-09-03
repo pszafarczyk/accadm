@@ -15,3 +15,10 @@ class DatabaseLoginError(DatabaseError):
 
     def __init__(self, username: str, message: str = 'Database login failed') -> None:
         super().__init__(f"{message} for user '{username}'")
+
+
+class SessionNotFoundError(BaseError):
+    """Raised when requested session does not exist (possibly expired)."""
+
+    def __init__(self, token: str, message: str = 'Session not found') -> None:
+        super().__init__(f"{message} for token '{token}'")

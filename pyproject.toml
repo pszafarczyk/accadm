@@ -22,6 +22,10 @@ complexipy = "^3.0.0"
 pydantic = "^2.11.7"
 psycopg2-binary = "^2.9.10"
 ldap3 = "^2.9.1"
+fastapi = { extras = ["standard"], version = "^0.116.1" }
+pydantic-settings = "^2.10.1"
+cachetools = "^6.2.0"
+types-cachetools = "^6.2.0.20250827"
 
 [tool.mypy]
 files = ["src", "tests"]
