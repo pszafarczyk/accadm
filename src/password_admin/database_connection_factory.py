@@ -1,11 +1,16 @@
-from typing import Literal
-from .database_connection_ldap import DatabaseConnectionLdap
-from .database_connection_postgress import DatabaseConnectionPostgres
-from .database_connection_abstract import DatabaseConnectionAbstract
+from .database_connection_ldap import DatabaseConnectionLdap, LdapConfig
+from .database_connection_postgress import DatabaseConnectionPostgres, PostgreConfig
+from .database_connection_abstract import DatabaseConnectionAbstract, DatabaseConfig
 
 
-def get_connection(db_type: Literal['ldap', 'postgres']) -> DatabaseConnectionAbstract:
-    if db_type == 'ldap':
-        return DatabaseConnectionLdap()
-    elif db_type == 'postgres':
-        return DatabaseConnectionPostgres()
+def get_connection(config: DatabaseConfig) -> DatabaseConnectionAbstract:
+    if type(config) is LdapConfig:
+        database_connection = DatabaseConnectionLdap()
+        database_connection.config(config)
+        return database_connection
+    elif type(config) is PostgreConfig:
+        database_connection = DatabaseConnectionPostgres()
+        database_connection.config(config)
+        return database_connection
+    else:
+        raise ValueError(f'Unsupported config type: {type(config)}')

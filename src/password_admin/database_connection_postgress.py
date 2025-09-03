@@ -1,5 +1,12 @@
 import psycopg2
 from psycopg2 import sql
+from password_admin.database_connection_abstract import DatabaseConfig
+from pydantic.dataclasses import dataclass
+
+
+@dataclass
+class PostgreConfig(DatabaseConfig):
+    dbname: str
 
 
 class DatabaseConnectionPostgres:
@@ -9,9 +16,9 @@ class DatabaseConnectionPostgres:
         """Initialize the PostgreSQL connection attributes."""
         self.connection = None
         self.cursor = None
-        self.config_data = {}
+        self.config_data: PostgreConfig
 
-    def config(self, host, dbname, port=5432):
+    def config(self, config: PostgreConfig) -> None:
         """Configure the PostgreSQL database connection parameters.
 
         Args:
@@ -23,11 +30,11 @@ class DatabaseConnectionPostgres:
             bool: True if configuration is successful, False otherwise.
         """
         try:
-            self.config_data = {'host': host, 'port': port, 'dbname': dbname}
+            self.config_data = config
         except Exception as e:
             print(f'Configuration error: {e}')
 
-    def login(self, user, password) -> bool:
+    def login(self, user, password) -> None:
         """Establish a connection to the PostgreSQL database.
 
         Args:
@@ -39,20 +46,18 @@ class DatabaseConnectionPostgres:
         """
         try:
             self.connection = psycopg2.connect(
-                host=self.config_data['host'],
-                port=self.config_data['port'],
-                dbname=self.config_data['dbname'],
+                host=self.config_data.host,
+                port=self.config_data.port,
+                dbname=self.config_data.dbname,
                 user=user,
                 password=password,
             )
             self.cursor = self.connection.cursor()
             print('Successfully connected to PostgreSQL database.')
-            return True
         except psycopg2.Error as e:
             print(f'Login error: {e}')
-            return False
 
-    def get_users(self, attributes=None, table_name='users'):
+    def get_users(self, attributes=None, table_name='users') -> list[dict]:
         """Retrieve users from a specified table in the PostgreSQL database.
 
         Assumes a table with user data (e.g., columns like 'id', 'username', 'email').
@@ -91,7 +96,7 @@ class DatabaseConnectionPostgres:
             print(f'Error retrieving users: {e}')
             return []
 
-    def logout(self) -> bool:
+    def logout(self) -> None:
         """Close the connection to the PostgreSQL database.
 
         Returns:
@@ -111,7 +116,7 @@ class DatabaseConnectionPostgres:
             print(f'Logout error: {e}')
             return False
 
-    def change_field(self, user, field_name, data, table_name='users', user_identifier='id'):
+    def change_field(self, user, field_name, data, table_name='users', user_identifier='id') -> None:
         """Update a specific field for a user in the PostgreSQL database.
 
         Args:
@@ -140,14 +145,11 @@ class DatabaseConnectionPostgres:
             # Check if any rows were affected
             if self.cursor.rowcount > 0:
                 print(f'Successfully updated {field_name} for user {user}')
-                return True
             else:
                 print(f'No user found with {user_identifier} = {user}')
-                return False
         except psycopg2.Error as e:
             print(f'Error updating field: {e}')
             # self.connection.rollback()
-            return False
 
-    def change_pass(self, user, new_pass):
+    def change_pass(self, user, new_pass) -> None:
         self.change_field(user=user, field_name='password', data=new_pass)
