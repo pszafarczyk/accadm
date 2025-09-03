@@ -1,4 +1,4 @@
-from typing import Protocol, Any, TypeVar
+from typing import Protocol, Any
 from pydantic.dataclasses import dataclass
 
 
@@ -8,11 +8,7 @@ class DatabaseConfig:
     port: int
 
 
-TConfig = TypeVar('TConfig', bound=DatabaseConfig)
-
-
-class DatabaseConnectionAbstract(Protocol[TConfig]):
-    def config(self, config: TConfig) -> None: ...
+class DatabaseConnectionAbstract(Protocol):
     def login(self, *args: Any, **kwargs: Any) -> None: ...
     def get_users(self, *args: Any, **kwargs: Any) -> list[dict]: ...
     def logout(self) -> None: ...

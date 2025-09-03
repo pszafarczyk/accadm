@@ -5,12 +5,10 @@ from .database_connection_abstract import DatabaseConnectionAbstract, DatabaseCo
 
 def get_connection(config: DatabaseConfig) -> DatabaseConnectionAbstract:
     if type(config) is LdapConfig:
-        database_connection = DatabaseConnectionLdap()
-        database_connection.config(config)
+        database_connection = DatabaseConnectionLdap(config)
         return database_connection
     elif type(config) is PostgreConfig:
-        database_connection = DatabaseConnectionPostgres()
-        database_connection.config(config)
+        database_connection = DatabaseConnectionPostgres(config)
         return database_connection
     else:
         raise ValueError(f'Unsupported config type: {type(config)}')

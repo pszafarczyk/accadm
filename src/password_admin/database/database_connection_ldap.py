@@ -1,5 +1,5 @@
 from ldap3 import Server, Connection, MODIFY_REPLACE, ALL, Tls
-from password_admin.database_connection_abstract import DatabaseConfig
+from .database_connection_abstract import DatabaseConfig
 from pydantic.dataclasses import dataclass
 
 
@@ -29,7 +29,7 @@ class DatabaseConnectionLdap:
         config_data (LdapConfig): Configuration data for the LDAP server connection.
     """
 
-    def __init__(self):
+    def __init__(self, config: LdapConfig):
         """Initialize the LDAP connection attributes.
 
         Sets up the initial state with no server or connection established.
@@ -38,6 +38,7 @@ class DatabaseConnectionLdap:
         self.server = None
         self.connection = None
         self.config_data: LdapConfig
+        self.config(config)
 
     def config(self, config: LdapConfig) -> None:
         """Configure the LDAP server connection parameters.

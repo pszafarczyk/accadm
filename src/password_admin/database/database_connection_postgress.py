@@ -1,6 +1,6 @@
 import psycopg2
 from psycopg2 import sql
-from password_admin.database_connection_abstract import DatabaseConfig
+from .database_connection_abstract import DatabaseConfig
 from pydantic.dataclasses import dataclass
 
 
@@ -12,11 +12,12 @@ class PostgreConfig(DatabaseConfig):
 class DatabaseConnectionPostgres:
     """A class to manage connections and operations with a PostgreSQL database."""
 
-    def __init__(self):
+    def __init__(self, config: PostgreConfig):
         """Initialize the PostgreSQL connection attributes."""
         self.connection = None
         self.cursor = None
         self.config_data: PostgreConfig
+        self.config(config)
 
     def config(self, config: PostgreConfig) -> None:
         """Configure the PostgreSQL database connection parameters.
