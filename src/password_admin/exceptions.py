@@ -20,7 +20,7 @@ class DbConnectionError(DbError):
 class DbQueryError(DbError):
     """Raised when a database query failed."""
 
-    def __init__(self, status_code: int =status.HTTP_500_INTERNAL_SERVER_ERROR, detail: str = 'Internal error') -> None:
+    def __init__(self, status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR, detail: str = 'Internal error') -> None:
         super().__init__(status_code=status_code, detail=detail)
 
 
