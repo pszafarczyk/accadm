@@ -1,8 +1,12 @@
-from password_admin.database.interface import DatabaseInterface
+from password_admin.database.config import DbConfig
+from password_admin.database.interface import DbConnectionInterface
 
 
-class DatabaseFactory:
+class DbConnectionFactory:
     """DatabaseFactory stub."""
 
-    def create(self) -> DatabaseInterface:  # type: ignore[empty-body]
+    def __init__(self, config: DbConfig):
+        self.__config = config
+
+    def create(self) -> DbConnectionInterface:  # type: ignore[empty-body]
         ...
