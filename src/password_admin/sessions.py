@@ -21,10 +21,10 @@ class SessionStore:
 
     def __init__(self, db_factory: DbConnectionFactory) -> None:
         self.__store: TTLCache[str, DbConnectionInterface] = TTLCache(maxsize=settings.max_sessions, ttl=settings.session_duration_seconds)
-        self._db_factory = db_factory
+        self.__db_factory = db_factory
         self.__logger = logging.getLogger(self.__class__.__name__)
 
-    def create_session(self, credentials: LoginCredentials) -> str | None:
+    def create_session(self, credentials: LoginCredentials) -> str:
         """Connects to database and stores connection under generated session_id.
 
         Args:
@@ -38,7 +38,7 @@ class SessionStore:
             DbLoginError: when credentials were invalid.
         """
         self.__logger.debug('New session requested for user %s', credentials.username)
-        db_connection = self._db_factory.create()
+        db_connection = self.__db_factory.create()
         db_connection.login(credentials)
         self.__logger.debug('Database connection successful for user %s', credentials.username)
         session_id = self.__create_random_session_id()
