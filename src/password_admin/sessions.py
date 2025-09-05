@@ -11,7 +11,7 @@ from password_admin.database.factory import DbConnectionFactory
 from password_admin.database.interface import DbConnectionInterface
 from password_admin.exceptions import DbError
 from password_admin.exceptions import SessionNotFoundError
-from password_admin.settings import SessionSettings
+from password_admin.settings import SessionConfig
 
 SESSION_ID_LEN_TO_LOG = 8
 
@@ -19,7 +19,7 @@ SESSION_ID_LEN_TO_LOG = 8
 class SessionStore:
     """Manages database connections for client's sessions."""
 
-    def __init__(self, settings: SessionSettings, db_factory: DbConnectionFactory) -> None:
+    def __init__(self, settings: SessionConfig, db_factory: DbConnectionFactory) -> None:
         self.__settings = settings
         self.__db_factory = db_factory
         self.__store: TTLCache[str, DbConnectionInterface] = TTLCache(maxsize=self.__settings.max_amount, ttl=self.__settings.duration_seconds)

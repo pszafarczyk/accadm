@@ -8,7 +8,7 @@ from pydantic_settings import BaseSettings
 from pydantic_settings import SettingsConfigDict
 
 
-class SessionSettings(BaseModel):
+class SessionConfig(BaseModel):
     """Settings related to sessions."""
 
     id_length: PositiveInt = 64
@@ -22,15 +22,10 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_nested_delimiter='__')
 
     database_type: Literal['postgres', 'ldap'] = 'postgres'
-    database_address: str = 'localhost'
-    database_port: int = 5432
-    database_name: str | None = None
-    base_dn: str | None = None
+    session: SessionConfig = SessionConfig()
     max_username_length: PositiveInt = 256
     username_allowed_characters: Annotated[str, StringConstraints(min_length=1)] = 'a-zA-Z0-9_.-@'
     min_password_length: PositiveInt = 16
     max_password_length: PositiveInt = 256
-    session: SessionSettings = SessionSettings()
-
 
 settings = Settings()
