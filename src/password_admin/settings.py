@@ -28,4 +28,5 @@ class Settings(BaseSettings):
     min_password_length: PositiveInt = 16
     max_password_length: PositiveInt = 256
 
+
 settings = Settings()
