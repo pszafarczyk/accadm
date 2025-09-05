@@ -9,7 +9,7 @@ from password_admin.exceptions import DbConnectionError
 from password_admin.exceptions import DbLoginError
 from password_admin.exceptions import SessionNotFoundError
 from password_admin.sessions import SessionStore
-from password_admin.settings import settings
+from password_admin.settings import SessionConfig
 from tests.dummy_database import DummyDbConfig
 from tests.dummy_database import DummyDbConnection
 
@@ -40,7 +40,7 @@ def db_factory(db_config: DummyDbConfig) -> DbConnectionFactory:
 @pytest.fixture
 def session_store(db_factory: DbConnectionFactory) -> SessionStore:
     """Fixture returning session store."""
-    return SessionStore(db_factory)
+    return SessionStore(SessionConfig(), db_factory)
 
 
 @pytest.fixture
@@ -169,8 +169,8 @@ def test_get_after_destroy_raises(session_store: SessionStore, credentials: Logi
 
 def test_get_after_expire_raises(db_factory: DbConnectionFactory, credentials: LoginCredentials) -> None:
     """Getting expired session raises."""
-    settings.session_duration_seconds = 1
-    session_store = SessionStore(db_factory)
+    session_settings = SessionConfig(duration_seconds=1)
+    session_store = SessionStore(session_settings, db_factory)
     session_id = session_store.create_session(credentials)
     time.sleep(2)
     with pytest.raises(SessionNotFoundError, match='Session not found', check=lambda e: e.status_code == status.HTTP_401_UNAUTHORIZED):
