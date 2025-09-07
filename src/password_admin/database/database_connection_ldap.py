@@ -1,10 +1,12 @@
 from ldap3 import Server, Connection, MODIFY_REPLACE, ALL, Tls
-from .database_connection_abstract import DatabaseConfig
+from .config import DbConfig
 from pydantic.dataclasses import dataclass
+from password_admin.auth import LoginCredentials, NewCredentials
+from pydantic import field_validator
 
 
 @dataclass
-class LdapConfig(DatabaseConfig):
+class LdapConfig(DbConfig):
     """Configuration settings for LDAP server connection.
 
     Attributes:
@@ -13,7 +15,37 @@ class LdapConfig(DatabaseConfig):
         port (int): The port number for the LDAP server (inherited from DatabaseConfig).
     """
 
-    base_dn: str
+    host: str
+    port: int
+    user_dn: str
+    admin_dn: str
+    user_query: str
+    user_atributes: str
+    pass_atribute: str
+
+    @field_validator('user_dn', 'admin_dn')
+    @classmethod
+    def validate_dn(cls, value: str) -> str:
+        msg = None
+        if False:
+            msg = 'BAD DN'
+        return value
+
+    @field_validator('user_query')
+    @classmethod
+    def validate_query(cls, value: str) -> str:
+        msg = None
+        if False:
+            msg = 'BAD QUERY'
+        return value
+
+    @field_validator('user_atributes')
+    @classmethod
+    def validate_atributes(cls, value: str) -> str:
+        msg = None
+        if False:
+            msg = 'atributes cannot be seperated'
+        return value
 
 
 class DatabaseConnectionLdap:
@@ -62,7 +94,7 @@ class DatabaseConnectionLdap:
         except Exception as e:
             print(f'Configuration error: {e}')
 
-    def login(self, bind_dn, bind_password) -> None:
+    def login(self, credentials: LoginCredentials) -> None:
         """Establish a connection and bind to the LDAP server.
 
         Authenticates to the LDAP server using the provided bind DN and password.
@@ -79,12 +111,15 @@ class DatabaseConnectionLdap:
         try:
             if not self.server:
                 raise ValueError('Server not configured. Call config() first.')
-            self.connection = Connection(self.server, user=bind_dn, password=bind_password, auto_bind=True)
+            self.connection = Connection(self.server, user=self._admin_parsing(credentials.username), password=credentials.password, auto_bind=True)
             print('Successfully connected to LDAP server.')
         except Exception as e:
             print(f'Login error: {e}')
 
-    def get_users(self, attributes=None) -> list[dict]:
+    def _admin_parsing(self, admin_str: str) -> str:
+        return admin_str + self.config_data.admin_dn
+
+    def get_users(self) -> list[str]:
         """Retrieve user entries from the LDAP server.
 
         Queries the LDAP server for user entries matching the 'inetOrgPerson' object class
@@ -107,14 +142,14 @@ class DatabaseConnectionLdap:
                 raise ValueError('Not connected. Call login() first.')
 
             # Default attributes if none provided
-            if attributes is None:
-                attributes = ['cn', 'uid', 'mail', 'userPassword']
+
+            attributes = ['uid']
 
             # Perform the search
             self.connection.search(
-                search_base=self.config_data.base_dn,
-                search_filter='(objectClass=inetOrgPerson)',  # Common filter for users
-                attributes=attributes,
+                search_base=self.config_data.user_dn,
+                search_filter=self.config_data.user_query,  # Common filter for users
+                attributes=self.config_data.user_atributes,
             )
 
             # Convert entries to a list of dictionaries
@@ -156,7 +191,7 @@ class DatabaseConnectionLdap:
         except Exception as e:
             print(f'Error editing user: {e}')
 
-    def change_pass(self, dn, new_pass) -> None:
+    def set_password(self, credentials: NewCredentials) -> None:
         """Update the password for a user in the LDAP server.
 
         A convenience method to update the 'userPassword' attribute for the specified user.
@@ -172,7 +207,7 @@ class DatabaseConnectionLdap:
             ValueError: If the connection is not established or bound (i.e., `login` was not called).
             Exception: If the password modification fails.
         """
-        self._change_field(dn, 'userPassword', new_pass)
+        self._change_field(credentials.username, 'userPassword', credentials.password)
 
     def logout(self) -> None:
         """Close the connection to the LDAP server.

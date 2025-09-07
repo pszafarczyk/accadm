@@ -1,11 +1,15 @@
 import psycopg2
 from psycopg2 import sql
-from .database_connection_abstract import DatabaseConfig
+from .config import DbConfig
 from pydantic.dataclasses import dataclass
+from password_admin.auth import LoginCredentials
+from password_admin.auth import NewCredentials
 
 
 @dataclass
-class PostgreConfig(DatabaseConfig):
+class PostgreConfig(DbConfig):
+    host: str
+    port: int
     dbname: str
 
 
@@ -35,7 +39,7 @@ class DatabaseConnectionPostgres:
         except Exception as e:
             print(f'Configuration error: {e}')
 
-    def login(self, user, password) -> None:
+    def login(self, credentials: LoginCredentials) -> None:
         """Establish a connection to the PostgreSQL database.
 
         Args:
@@ -50,15 +54,15 @@ class DatabaseConnectionPostgres:
                 host=self.config_data.host,
                 port=self.config_data.port,
                 dbname=self.config_data.dbname,
-                user=user,
-                password=password,
+                user=credentials.username,
+                password=credentials.password,
             )
             self.cursor = self.connection.cursor()
             print('Successfully connected to PostgreSQL database.')
         except psycopg2.Error as e:
             print(f'Login error: {e}')
 
-    def get_users(self, attributes=None, table_name='users') -> list[dict]:
+    def get_users(self, attributes=None, table_name='users') -> list[str]:
         """Retrieve users from a specified table in the PostgreSQL database.
 
         Assumes a table with user data (e.g., columns like 'id', 'username', 'email').
@@ -111,13 +115,10 @@ class DatabaseConnectionPostgres:
                 print('Successfully disconnected from PostgreSQL database.')
                 self.connection = None
                 self.cursor = None
-                return True
-            return False
         except psycopg2.Error as e:
             print(f'Logout error: {e}')
-            return False
 
-    def change_field(self, user, field_name, data, table_name='users', user_identifier='id') -> None:
+    def _change_field(self, user, field_name, data, table_name='users', user_identifier='id') -> None:
         """Update a specific field for a user in the PostgreSQL database.
 
         Args:
@@ -152,5 +153,5 @@ class DatabaseConnectionPostgres:
             print(f'Error updating field: {e}')
             # self.connection.rollback()
 
-    def change_pass(self, user, new_pass) -> None:
-        self.change_field(user=user, field_name='password', data=new_pass)
+    def set_password(self, credentials: NewCredentials) -> None:
+        self._change_field(user=credentials.username, field_name='password', data=credentials.password)
