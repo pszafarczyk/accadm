@@ -11,7 +11,7 @@ from password_admin.database.factory import DbConnectionFactory
 from password_admin.database.interface import DbConnectionInterface
 from password_admin.exceptions import DbError
 from password_admin.exceptions import SessionNotFoundError
-from password_admin.settings import settings
+from password_admin.settings import SessionConfig
 
 SESSION_ID_LEN_TO_LOG = 8
 
@@ -19,12 +19,13 @@ SESSION_ID_LEN_TO_LOG = 8
 class SessionStore:
     """Manages database connections for client's sessions."""
 
-    def __init__(self, db_factory: DbConnectionFactory) -> None:
-        self.__store: TTLCache[str, DbConnectionInterface] = TTLCache(maxsize=settings.max_sessions, ttl=settings.session_duration_seconds)
-        self._db_factory = db_factory
+    def __init__(self, settings: SessionConfig, db_factory: DbConnectionFactory) -> None:
+        self.__settings = settings
+        self.__db_factory = db_factory
+        self.__store: TTLCache[str, DbConnectionInterface] = TTLCache(maxsize=self.__settings.max_amount, ttl=self.__settings.duration_seconds)
         self.__logger = logging.getLogger(self.__class__.__name__)
 
-    def create_session(self, credentials: LoginCredentials) -> str | None:
+    def create_session(self, credentials: LoginCredentials) -> str:
         """Connects to database and stores connection under generated session_id.
 
         Args:
@@ -38,7 +39,7 @@ class SessionStore:
             DbLoginError: when credentials were invalid.
         """
         self.__logger.debug('New session requested for user %s', credentials.username)
-        db_connection = self._db_factory.create()
+        db_connection = self.__db_factory.create()
         db_connection.login(credentials)
         self.__logger.debug('Database connection successful for user %s', credentials.username)
         session_id = self.__create_random_session_id()
@@ -49,7 +50,7 @@ class SessionStore:
         return session_id
 
     def __create_random_session_id(self) -> str:
-        return secrets.token_urlsafe(settings.session_id_length)
+        return secrets.token_urlsafe(self.__settings.id_length)
 
     def destroy_session(self, session_id: str) -> None:
         """Disconnects from database and removes stored session.
