@@ -1,21 +1,54 @@
+import logging
+from password_admin.database.ldap.config import LdapConfig
+from password_admin.database.postgres.config import PostgresConfig
+from password_admin.database.ldap.connection_ldap import DatabaseConnectionLdap
+from password_admin.database.postgres.connection_postgress import DatabaseConnectionPostgres
 from password_admin.database.config import DbConfig
 from password_admin.database.interface import DbConnectionInterface
-from .database_connection_ldap import DatabaseConnectionLdap, LdapConfig
-from .database_connection_postgress import DatabaseConnectionPostgres, PostgreConfig
+import password_admin.exceptions
 
 
 class DbConnectionFactory:
-    """DatabaseFactory stub."""
+    """Factory for creating database connection instances based on configuration.
+
+    Creates instances of database connection classes (e.g., LDAP or PostgreSQL) based on the provided
+    configuration type. Logs operations and errors using the Python logging module.
+
+    Attributes:
+        __config (DbConfig): The configuration object for the database connection.
+        logger (logging.Logger): Logger instance for recording operations and errors.
+    """
 
     def __init__(self, config: DbConfig):
-        self.__config = config
+        """Initializes the factory with a database configuration.
 
-    def create(self) -> DbConnectionInterface:  # type: ignore[empty-body]
-        if isinstance(self.__config, LdapConfig):
-            database_connection = DatabaseConnectionLdap(self.__config)
-            return database_connection
-        elif type(self.__config) is PostgreConfig:
-            database_connection = DatabaseConnectionPostgres(self.__config)
-            return database_connection
-        else:
-            raise ValueError(f'Unsupported config type: {type(self.__config)}')
+        Args:
+            config (DbConfig): Configuration object for the database (e.g., LdapConfig or PostgresConfig).
+        """
+        self.__config = config
+        self.logger = logging.getLogger(__name__)
+        self.logger.info(f'Initialized DbConnectionFactory with config type: {type(config).__name__}')
+
+    def create(self) -> DbConnectionInterface:
+        """Creates a database connection instance based on the configuration.
+
+        Returns:
+            DbConnectionInterface: An instance of a database connection class (e.g., DatabaseConnectionLdap or DatabaseConnectionPostgres).
+
+        Raises:
+            password_admin.exceptions.DbConnectionError: If the configuration type is unsupported or connection creation fails.
+            AttributeError: If the configuration object is invalid (e.g., missing required attributes).
+        """
+        try:
+            if isinstance(self.__config, LdapConfig):
+                self.logger.info('Creating LDAP database connection')
+                return DatabaseConnectionLdap(self.__config)
+            elif isinstance(self.__config, PostgresConfig):
+                self.logger.info('Creating PostgreSQL database connection')
+                return DatabaseConnectionPostgres(self.__config)
+            else:
+                self.logger.error(f'Unsupported config type: {type(self.__config).__name__}')
+                raise password_admin.exceptions.DbConnectionError(detail=f'Unsupported config type: {type(self.__config).__name__}')
+        except AttributeError as e:
+            self.logger.error(f'Invalid configuration: {e}')
+            raise password_admin.exceptions.DbConnectionError(detail=f'Invalid configuration: {str(e)}')

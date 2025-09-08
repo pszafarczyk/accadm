@@ -23,16 +23,17 @@ class LdapConfig(DbConfig):
         Field(
             description='LDAP connection string with no dn or search criteria',
             examples='ldap://localhost:1389, ldaps://192.168.0.1',
-            pattern=r'^ldaps?://[a-zA-Z0-9.-]+(:[0-9]+)?$' # IPv6?
-        )
-    ] = 'ldap://localhost'
+            pattern=r'^ldaps?://[a-zA-Z0-9.-]+(:[0-9]+)?$',  # IPv6?
+        ),
+    ] = 'ldap://localhost:389'
     use_ssl: bool = False
     use_starttls: bool = False
-    base_bind_dn: Annotated[str, StringConstraints(min_length=1)] = 'dc=example,dc=net'
+    base_bind_dn: Annotated[str, StringConstraints(min_length=1)] = 'cn=admin,dc=test,dc=org'
     # validation? https://stackoverflow.com/questions/9289357/javascript-regular-expression-for-dn
     admin_rdn_attribute: Annotated[str, StringConstraints(min_length=1)] = 'cn'
     admin_rdn_container_attribute: str = 'ou'
     admin_rdn_separator: Annotated[str, Field(description='String used to split login')] = '@'
-    base_dn: Annotated[str, StringConstraints(min_length=1)] = 'dc=example,dc=com'
-    search_filter: Annotated[str, StringConstraints(min_length=1)] = '(&(objectclass=inetOrgPerson)(mail=*))' # + pattern
-    name_attribute: Annotated[str, StringConstraints(min_length=1)] = 'employeeNumber'
+    base_dn: Annotated[str, StringConstraints(min_length=1)] = 'dc=test,dc=org'
+    search_filter: Annotated[str, StringConstraints(min_length=1)] = '(&(objectclass=inetOrgPerson)(mail=*))'  # + pattern
+    name_attribute: Annotated[str, StringConstraints(min_length=1)] = 'mail'
+    password_atribute: Annotated[str, StringConstraints(min_length=1)] = 'userPassword'
