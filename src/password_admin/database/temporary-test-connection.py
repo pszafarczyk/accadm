@@ -1,11 +1,14 @@
 import logging
+
+from pydantic import PostgresDsn
 from pydantic import ValidationError
+
+from password_admin.auth import LoginCredentials
+from password_admin.auth import NewCredentials
 from password_admin.database.factory import DbConnectionFactory
 from password_admin.database.ldap.config import LdapConfig
 from password_admin.database.postgres.config import PostgresConfig
-from password_admin.auth import LoginCredentials, NewCredentials
 import password_admin.exceptions
-from pydantic import PostgresDsn
 
 
 def test_connections():
@@ -51,7 +54,7 @@ def test_ldap(logger):
         logger.error(f'LDAP user not found error: {e.detail}')
         raise
     except Exception as e:
-        logger.error(f'Unexpected LDAP error: {str(e)}')
+        logger.error(f'Unexpected LDAP error: {e!s}')
         raise
 
 
@@ -95,7 +98,7 @@ def test_postgres(logger):
         logger.error(f'PostgreSQL user not found error: {e.detail}')
         raise
     except Exception as e:
-        logger.error(f'Unexpected PostgreSQL error: {str(e)}')
+        logger.error(f'Unexpected PostgreSQL error: {e!s}')
         raise
 
 

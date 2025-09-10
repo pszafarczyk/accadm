@@ -11,12 +11,11 @@ from password_admin.database.config import DbConfig
 class PostgresConfig(DbConfig):
     """Postgres related settings."""
 
-    dsn: Annotated[
-        PostgresDsn,
-        Field(description='Postgres connection string with no user/password')
-    ] = PostgresDsn('postgres://localhost:5432/postgres&sslmode=require')
+    dsn: Annotated[PostgresDsn, Field(description='Postgres connection string with no user/password')] = PostgresDsn(
+        'postgres://localhost:5432/postgres&sslmode=require'
+    )
     users_query: Annotated[str, StringConstraints(min_length=1)] = 'SELECT username FROM users'
-    password_query: Annotated[str, StringConstraints(min_length=1)] = 'UPDATE users SET password = %p WHERE username = %u'
+    password_query: Annotated[str, StringConstraints(min_length=1)] = 'UPDATE users SET password = %p WHERE username = %u'  # noqa: S105
 
     @field_validator('dsn')
     @classmethod

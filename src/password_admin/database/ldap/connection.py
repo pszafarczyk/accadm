@@ -1,18 +1,24 @@
 import logging
-from ldap3 import Server, Connection, MODIFY_REPLACE, ALL
-from ldap3.core.exceptions import LDAPException
-from password_admin.auth import LoginCredentials, NewCredentials
-from password_admin.database.ldap.config import LdapConfig
 import urllib.parse
+
+from ldap3 import ALL
+from ldap3 import Connection
+from ldap3 import MODIFY_REPLACE
+from ldap3 import Server
+from ldap3.core.exceptions import LDAPException
+
+from password_admin.auth import LoginCredentials
+from password_admin.auth import NewCredentials
+from password_admin.database.ldap.config import LdapConfig
 import password_admin.exceptions
 
 
 class DatabaseConnectionLdap:
     """Manages connections and operations with an OpenLDAP server.
 
-    Provides methods to configure, connect, query, and modify data on an LDAP server using the ldap3 library.
-    Supports user authentication, retrieval of user attributes, and password updates. Logs operations and errors
-    using the Python logging module.
+    Provides methods to configure, connect, query, and modify data on an LDAP server
+    using the ldap3 library. Supports user authentication, retrieval of user attributes,
+    and password updates. Logs operations and errors using the Python logging module.
 
     Attributes:
         server (ldap3.Server): The LDAP server object, initialized during configuration.
@@ -24,11 +30,13 @@ class DatabaseConnectionLdap:
     def __init__(self, config: LdapConfig):
         """Initializes the LDAP connection attributes.
 
-        Sets up the initial state with no server or connection established. The `config` method is called
-        with the provided configuration to prepare the server connection. Initializes the logger.
+        Sets up the initial state with no server or connection established. The `config`
+        method is called with the provided configuration to prepare the server
+        connection. Initializes the logger.
 
         Args:
-            config (LdapConfig): Configuration object containing LDAP server details (e.g., host, port, base DN).
+            config (LdapConfig): Configuration object with LDAP server details (e.g.,
+                host, port, base DN).
         """
         self.server = None
         self.connection = None
@@ -39,14 +47,15 @@ class DatabaseConnectionLdap:
     def config(self, config: LdapConfig) -> None:
         """Configures the LDAP server connection parameters.
 
-        Sets up the LDAP server with the provided configuration, including host, port, and base DN.
-        Prepares the server for connection but does not establish it.
+        Sets up the LDAP server with the provided configuration, including host, port,
+        and base DN. Prepares the server for connection but does not establish it.
 
         Args:
             config (LdapConfig): Configuration object containing LDAP server details.
 
         Raises:
-            password_admin.exceptions.DbConnectionError: If the configuration is invalid (e.g., missing hostname in DSN).
+            password_admin.exceptions.DbConnectionError: If the configuration is invalid
+                (e.g., missing hostname in DSN).
             AttributeError: If DSN parsing fails due to invalid configuration.
         """
         try:
@@ -55,26 +64,29 @@ class DatabaseConnectionLdap:
 
             if parsed.hostname:
                 self.server = Server(host=parsed.hostname, port=parsed.port, use_ssl=self.config_data.use_ssl, get_info=ALL)
-                self.logger.info(f'Configured LDAP server: {parsed.hostname}:{parsed.port}')
+                self.logger.info('Configured LDAP server: %s:%s', parsed.hostname, parsed.port)
             else:
                 self.logger.error('Invalid DSN: Missing hostname')
                 raise password_admin.exceptions.DbConnectionError(detail='Invalid DSN: Missing hostname')
         except AttributeError as e:
-            self.logger.error(f'Configuration error: Invalid DSN format: {e}')
-            raise password_admin.exceptions.DbConnectionError(detail=f'Configuration error: Invalid DSN format: {str(e)}')
+            self.logger.exception('Configuration error: Invalid DSN format')
+            raise password_admin.exceptions.DbConnectionError(detail=f'Configuration error: Invalid DSN format: {e!s}') from None
 
     def login(self, credentials: LoginCredentials) -> None:
         """Establishes and binds a connection to the LDAP server.
 
-        Authenticates to the LDAP server using the provided credentials. The server must be configured
-        using `config` before calling this method.
+        Authenticates to the LDAP server using the provided credentials. The server must
+        be configured using `config` before calling this method.
 
         Args:
-            credentials (LoginCredentials): Object containing the username and password for authentication.
+            credentials (LoginCredentials): Object with username and password for
+                authentication.
 
         Raises:
-            password_admin.exceptions.DbConnectionError: If the server is not configured (i.e., `config` was not called).
-            password_admin.exceptions.DbLoginError: If authentication fails (e.g., invalid credentials or server unreachable).
+            password_admin.exceptions.DbConnectionError: If the server is not
+                configured (i.e., `config` was not called).
+            password_admin.exceptions.DbLoginError: If authentication fails (e.g.,
+                invalid credentials or server unreachable).
         """
         try:
             if not self.server:
@@ -83,13 +95,14 @@ class DatabaseConnectionLdap:
             self.connection = Connection(self.server, user=self._admin_parsing(credentials.username), password=credentials.password, auto_bind=True)
             self.logger.info('Successfully connected to LDAP server')
         except LDAPException as e:
-            self.logger.error(f"Login error for user '{credentials.username}': {e}")
-            raise password_admin.exceptions.DbLoginError(username=credentials.username, detail=f'Login error: {str(e)}')
+            self.logger.exception("Login error for user '%s'", credentials.username)
+            raise password_admin.exceptions.DbLoginError(username=credentials.username, detail=f'Login error: {e!s}') from None
 
     def _admin_parsing(self, admin_str: str) -> str:
         """Constructs the Distinguished Name (DN) for the admin user.
 
-        Combines the provided admin username with the base bind DN from the configuration.
+        Combines the provided admin username with the base bind DN from the
+        configuration.
 
         Args:
             admin_str (str): The admin username (e.g., 'admin').
@@ -102,16 +115,18 @@ class DatabaseConnectionLdap:
     def get_users(self) -> list[str]:
         """Retrieves a list of user identifiers from the LDAP server.
 
-        Queries the LDAP server for users matching the configured search filter and returns their
-        name attributes as specified in the configuration.
+        Queries the LDAP server for users matching the configured search filter and
+        returns their name attributes as specified in the configuration.
 
         Returns:
-            list[str]: A list of user identifiers (e.g., usernames). Returns an empty list if no users
-                are found or an error occurs.
+            list[str]: A list of user identifiers (e.g., usernames). Returns an empty
+                list if no users are found or an error occurs.
 
         Raises:
-            password_admin.exceptions.DbConnectionError: If no connection is established or bound (i.e., `login` was not called).
-            password_admin.exceptions.DbQueryError: If the search operation fails (e.g., invalid search filter or server issues).
+            password_admin.exceptions.DbConnectionError: If no connection is established
+                or bound (i.e., `login` was not called).
+            password_admin.exceptions.DbQueryError: If the search operation fails (e.g.,
+                invalid search filter or server issues).
         """
         try:
             if not self.connection or not self.connection.bound:
@@ -124,31 +139,32 @@ class DatabaseConnectionLdap:
                 attributes=[self.config_data.name_attribute],
             )
 
-            users = []
-            for entry in self.connection.entries:
-                if self.config_data.name_attribute in entry:
-                    users.append(entry[self.config_data.name_attribute].value)
+            users = [entry[self.config_data.name_attribute].value for entry in self.connection.entries if self.config_data.name_attribute in entry]
 
-            self.logger.info(f'Retrieved {len(users)} users from LDAP server')
+            self.logger.info('Retrieved %s users from LDAP server', len(users))
             return users
 
         except LDAPException as e:
-            self.logger.error(f'Error retrieving users: {e}')
-            raise password_admin.exceptions.DbQueryError(detail=f'Error retrieving users: {str(e)}')
+            self.logger.exception('Error retrieving users.')
+            raise password_admin.exceptions.DbQueryError(detail=f'Error retrieving users: {e!s}') from None
 
     def set_password(self, credentials: NewCredentials) -> None:
         """Updates the password for a user in the LDAP server.
 
-        Modifies the password attribute for the specified user identified by their username.
-        Uses the MODIFY_REPLACE operation to update the password.
+        Modifies the password attribute for the specified user identified by their
+        username. Uses the MODIFY_REPLACE operation to update the password.
 
         Args:
-            new_credentials (NewCredentials): Object containing the username and new password.
+            credentials (NewCredentials): Object containing the username and new
+                password.
 
         Raises:
-            password_admin.exceptions.DbConnectionError: If no connection is established or bound (i.e., `login` was not called).
-            password_admin.exceptions.SessionNotFoundError: If no user or multiple users are found for the given identifier.
-            password_admin.exceptions.DbQueryError: If the modification operation fails (e.g., invalid password format or server issues).
+            password_admin.exceptions.DbConnectionError: If no connection is
+                established or bound (i.e., `login` was not called).
+            password_admin.exceptions.SessionNotFoundError: If no user or multiple
+                users are found for the given identifier.
+            password_admin.exceptions.DbQueryError: If the modification operation fails
+                (e.g., invalid password format or server issues).
         """
         try:
             if not self.connection or not self.connection.bound:
@@ -162,36 +178,37 @@ class DatabaseConnectionLdap:
             )
 
             if not self.connection.entries:
-                self.logger.error(f'No user found with identifier: {credentials.username}')
+                self.logger.exception('No user found with identifier: %s', credentials.username)
                 raise password_admin.exceptions.SessionNotFoundError(detail=f'No user found with identifier: {credentials.username}')
 
             if len(self.connection.entries) > 1:
-                self.logger.error(f'Multiple users found with identifier: {credentials.username}')
+                self.logger.exception('Multiple users found with identifier: %s', credentials.username)
                 raise password_admin.exceptions.SessionNotFoundError(detail=f'Multiple users found with identifier: {credentials.username}')
 
             user_dn = self.connection.entries[0].entry_dn
-            self.logger.info(f'Modifying password for DN: {user_dn}, attribute: {self.config_data.password_atribute}')
+            self.logger.info('Modifying password for DN: %s, attribute: %s', user_dn, self.config_data.password_atribute)
             self.connection.modify(user_dn, {self.config_data.password_atribute: [(MODIFY_REPLACE, [credentials.password])]})
             if self.connection.result['result'] == 0:
-                self.logger.info(f'Successfully updated password for {credentials.username}')
+                self.logger.info('Successfully updated password for %s', credentials.username)
             else:
-                self.logger.error(f'Modify operation failed: {self.connection.result}')
+                self.logger.error('Modify operation failed: %s', self.connection.result)
                 raise password_admin.exceptions.DbQueryError(detail=f'Modify operation failed: {self.connection.result}')
 
         except (password_admin.exceptions.DbConnectionError, password_admin.exceptions.SessionNotFoundError):
             raise
         except LDAPException as e:
-            self.logger.error(f'Error editing user: {e}')
-            raise password_admin.exceptions.DbQueryError(detail=f'Error editing user: {str(e)}')
+            self.logger.exception('Error editing user')
+            raise password_admin.exceptions.DbQueryError(detail=f'Error editing user: {e!s}') from None
 
     def logout(self) -> None:
         """Closes the connection to the LDAP server.
 
-        Unbinds the current connection, releasing resources. The connection must be established
-        and bound before calling this method.
+        Unbinds the current connection, releasing resources. The connection must be
+        established and bound before calling this method.
 
         Raises:
-            password_admin.exceptions.DbConnectionError: If unbinding the connection fails (e.g., server issues).
+            password_admin.exceptions.DbConnectionError: If unbinding the connection
+                fails (e.g., server issues).
         """
         try:
             if self.connection and self.connection.bound:
@@ -201,8 +218,8 @@ class DatabaseConnectionLdap:
             else:
                 self.logger.info('Logout not needed')
         except LDAPException as e:
-            self.logger.error(f'Logout error: {e}')
-            raise password_admin.exceptions.DbConnectionError(detail=f'Logout error: {str(e)}')
+            self.logger.exception('Logout error')
+            raise password_admin.exceptions.DbConnectionError(detail=f'Logout error: {e!s}') from None
 
     def _combine_filter(self, value: str) -> str:
         """Combines the configured search filter with a specific user identifier.
@@ -211,6 +228,7 @@ class DatabaseConnectionLdap:
             value (str): The user identifier to include in the filter (e.g., username).
 
         Returns:
-            str: The combined LDAP search filter (e.g., '(&(objectClass=person)(uid=jdoe))').
+            str: The combined LDAP search filter (e.g., '(&(objectClass=person)
+                (uid=jdoe))').
         """
         return f'(&{self.config_data.search_filter}({self.config_data.name_attribute}={value}))'

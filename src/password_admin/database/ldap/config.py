@@ -1,4 +1,3 @@
-import re
 from typing import Annotated
 
 from pydantic import Field
@@ -36,4 +35,4 @@ class LdapConfig(DbConfig):
     base_dn: Annotated[str, StringConstraints(min_length=1)] = 'dc=test,dc=org'
     search_filter: Annotated[str, StringConstraints(min_length=1)] = '(&(objectclass=inetOrgPerson)(mail=*))'  # + pattern
     name_attribute: Annotated[str, StringConstraints(min_length=1)] = 'mail'
-    password_atribute: Annotated[str, StringConstraints(min_length=1)] = 'userPassword'
+    password_atribute: Annotated[str, StringConstraints(min_length=1)] = 'userPassword'  # noqa: S105
